@@ -1,0 +1,102 @@
+<html>
+  <head>
+    <script src="http://unpkg.com/tone"></script>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="markov-explorer.js"></script>
+  </head>
+  <body>
+    <main>
+    </main>
+    <!--
+    <div>
+        <svg id="classTest" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+
+        </svg>
+    </div>
+    -->
+    <div>
+        <svg id="textChain" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+            <filter id="select">
+                <feColorMatrix type="saturate" values="0.5"/>
+            </filter>
+            <rect
+                id="rowSelectionBorder"
+                stroke="tomato"
+                stroke-width="5"
+                fill="none"
+                width="100%"
+                height="20%"
+                x="0"
+                y="0">
+            </rect>
+        </svg>
+        <svg id="textProb" width="300" height="400" xmlns="http://www.w3.org/2000/svg">
+            <g id="probKey">
+                <text
+                    fill="black"
+                    font-size="1.5em"
+                    x="0"
+                    y="12.5%">
+                    Random:
+                </text>
+                <text
+                    id="textRandom"
+                    fill="tomato"
+                    font-size="1.5em"
+                    x="50%"
+                    y="12.5%">
+                    ----
+                </text>
+            </g>
+            <g id="probMeter" transform="translate(-100, -100)">
+                <rect width="2" height="25%" fill="tomato"></rect>
+            </g>
+            <g id="probBar" fill="lightgrey" transform="translate(0,200)">
+                <!--<rect id="probBarBg" width="50%" height="25%"></rect> -->
+            </g>
+        </svg>
+    </div>
+    <div>
+        <input
+            type="text"
+            id="textChainInput"
+            name="sequence"
+            size="40"
+            placeholder="Enter a sequence of letters [a-d]"
+        />  
+    </div>
+    <div>
+        <svg id="sequencer" width="500" height="255" xmlns="http://www.w3.org/2000/svg">
+        </svg>
+    </div>
+    <div
+        id="drop_zone"
+        ondrop="dropHandler(event);"
+        ondragover="dragOverHandler(event);">
+        <div id="tMap">
+        </div>
+        <div>
+            <svg id="pRoll" width="500" height="255" xmlns="http://www.w3.org/2000/svg">
+                <filter id="grayscale">
+                    <feColorMatrix type="saturate" values="0.10"/>
+                </filter>
+                <text x="50%" y="10%" font-size="12" text-anchor="middle" fill="black">
+                    Drag and drop midi files here
+                </text>
+            </svg>
+        </div>
+    </div>
+    <div id="tMapSelect">
+        <select id="midiSelect">
+            <option>select midi file</option>
+        </select>
+    </div>
+    
+    <div>
+        <form id ="trackSelect">
+        </form>
+    </div>
+    <button onclick="mapSelectedMidi()">Model Selection</button> 
+  </body>
+</html>
