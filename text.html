@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>text.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="markov-chains">Markov Chains</h1>
+<h2 id="where-markov-chains-are">Where Markov Chains Are</h2>
+<p>Markov chains might be thought of as a satellite planet in a cluster of curious phenomena revolving around chance and probabilites. In this way, one could map constellations with other orbiting bodies such as language, music, Google's PageRank algorithm, Stable Diffusion, and even psychoanalysis.</p>
+<h2 id="what-a-markov-chain-is-and-isnt">What a Markov Chain is (and isn't)</h2>
+<p>A Markov chain enocdes or describes a <strong>sequence</strong> of <strong>states</strong> and their <strong>transitions</strong> from one to the next. A 'state' can be a rather abstract term, but can be thought of as whatever the current value of something that changes currently is. Say, like the weather, our mood, or what activity we a currently up to. One of the first and enduring applications of this idea was to apply it to text; a sequence of letters or words. A Markov chain or <strong>model</strong> of a sequence is simply the record of the of the changes in that sequence, stored as <strong>probabilities</strong>.</p>
+<p>picture of markov notes</p>
+<p>You might interact (or be tempted to interact) with Markov Chains every day. Every time the keyboard on your phone is present, odds are you have an interface to a Markov model of possibly all the words you've ever typed into your phone.</p>
+<p>gif of text markov on the phone...</p>
+<p>It is often the case that the words spread across the top of the keyboard are the top three most likely words to follow the most recent word typed.</p>
+<h2 id="probability-and-chance">Probability and Chance</h2>
+<p>If you flip a coin, ignoring extreme circumstances, it will land on one of two sides. One might call this a &quot;50/50&quot; chance. But what that name obscures is that it's technically a '0.5' chance. This number is the result of taking 1 (as in 1 outcome) divided by the total number of possible outcomes (2 sides of the coin). If you flip a coin 10 times, you might have 6 for one and 4 for the other. However, if the coin's origin isn't magical, over an large amount of tosses, the total for each side converges or becomes substantially the same. Notice that as the number of attempts becomes sufficently large the total of one outcome divided by the total attempts is approximately our initial <strong>probability</strong> of 0.5. You might say that our outcomes are constrained to our probabilities, they can't get away from them.</p>
+<h2 id="digitizing-the-coin">Digitizing the Coin</h2>
+<p>You could recreate this coin mechanism by generating a random number between 0 and 1. If we classify the numbers below 0.5 as one side of the coin and the numbers above 0.5 as the other side, each outcome has an equal probability.</p>
+<pre class="hljs"><code><div>var coin
+if(Math.random() &lt; 0.5)
+    coin = 'heads'
+else
+    coin = 'tails'
+</div></code></pre>
+<p>Changing the test condition from &quot;less than 0.5&quot; to &quot;less than 0.6&quot; will make 'heads' the more likely outcome over time.</p>
+<h2 id="probability-distributions">Probability Distributions</h2>
+<p>Just like the slider can be moved around to effect the amount of times a random number lands in that region, more regions can be added taking up various amounts of space on the number line. This, in a sense, is a probability distribution. The more space an option takes up, the more likely it is that a random number will fall within it's boundaries.</p>
+<h2 id="building-a-markov-chain">Building a Markov Chain</h2>
+<p>In the sequence of letters <code>a</code> -&gt; <code>a</code> -&gt; <code>b</code>,  <code>a</code> has a &quot;50/50&quot; chance of being followed by another <code>a</code> or being follwed by <code>b</code>. In this sequence, the two <strong>transitions</strong>, represented by arrows, are two outcomes of the state <code>a</code>. Two different outcomes, each of them happening an equal amount of times. Notice that row <code>b</code> doesn't have any information yet as nothing follows it.</p>
+<p>Continue the sequence by adding another <code>a</code>. According to our data <code>b</code> is now always followed by <code>a</code> with the probability of 1.0 or a &quot;100 precent chance.&quot; Adding yet another <code>a</code> will change the <strong>weights</strong> of the possible next states of <code>a</code> to be more biased toward <code>a</code>.</p>
+<h2 id="making-a-model-generative">Making a model generative</h2>
+<p>By itself, this table of probabilities doesn't perform any action, it's merely an analysis of the training data. However, if the table is used as a map to guide a random input, it has a certain influence over the outcomes.</p>
+<p>You can step through the generative output of your sequence above step by step.</p>
+<h2 id="extending-these-ideas">Extending These Ideas...</h2>
+<p>The current state has a set of probabilities related to what comes next in the text box. Those probabilites are mapped, according to their size across the number line. A random number is generated which will fall within some region, with larger regions being more likely to contain the random number. The region that contains the generated number becomes the next state.</p>
+<p>If the table is viewed like a game board, the model influences what space or row is <em>moved to</em> next. If that space was not a row in a table but a key on a piano, it would influence what notes are played in a melody.</p>
+<h2 id="modeling-music">Modeling Music</h2>
+<p>Here a short sequence or melody can be programmed similar to a piano roll in ableton. The melody can be played back as well as the output generated from a markov model of the melody. How might different initial sequences affect the 'musicality' of the generated output? Do some models sound more interesting than others?</p>
+<p>How do the initial melodies affect this &quot;connected graph&quot; visualisation of the model?</p>
+<h2 id="new-problems">New Problems</h2>
+<p>Some issues become more visible here:</p>
+<ol>
+<li>Markov chains only model or describe one variable. Like the 'pitch' in the monophonic melody above.</li>
+<li>It is possible that the next note is influenced by something other than the last note played.</li>
+</ol>
+<h2 id="building-more-comprehensive-models">Building more comprehensive models</h2>
+<p>At this point the avenues to solve some of these problems become quite diverse and numerous. Taking at least one step and increasing the scope to include polyphonic music (more than one note at a time) what are some attributes or features of a piece of music?</p>
+<ul>
+<li>the number of notes played?</li>
+<li>the time between new notes/chords?</li>
+<li>the length of time a note or chord is sustained?</li>
+<li>the pitches of notes/chords?</li>
+<li>how loud or soft the sounds are?</li>
+<li>are there others?</li>
+</ul>
+<p>Luckily, a score or midi file for a musical piece generally includes  much this information and each parameter or attribute would just need to be modeled separately as it's own sequence.</p>
+<p>When moving through a musical piece the time between notes can be described as a sequence: wait a quarter note, then wait an eighth note, etc... The number of notes played simultaneously can be kept track of and turned into it's own sequence: 3 notes at once, 2 notes at once, then a single note... All this data can be extracted from score or a midi file.</p>
+<p>Below you can drag and drop midi files which might contain whole compositions or single instruments and create models of any combination of midi tracks and later even combinations of different musical peices.</p>
+
+</body>
+</html>

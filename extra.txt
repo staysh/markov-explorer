@@ -1,0 +1,25 @@
+“IN NO IST LAT WHEY CRATICT FOURE BIRS GROCID”
+[30] Claude E. Shannon. A Mathematical Theory of Communication. The Bell System Technical
+Jorurnal, Vol. 27, 1948, July, 379-423, October, 623-656. Also included in Collected Papers,
+ed. by N.J. Sloane and Aaron D. Wyner. IEEE Press, Piscataway, 1993, 5-83
+
+t this same time, the ever well-informed French
+psychoanalyst Jacques Lacan introduced Markov chains as the underlying mechanism
+for explaining the process by which unconscious choices are made. Lacan hints that
+Shannon’s machine was the model for his theory [16, 17]
+
+[16] Jacques Lacan.  ́Ecrits. Le champ freudien. (Ch. 1 Le s ́eminare sur “la Lettre vol ́ee” )  ́Editions
+du Seuil, Paris, 1966.
+[17] Jacques Lacan. Le S ́eminare. Livre II. Le moi dans la th ́eorie de Freud et dans la technique de
+la psychanalyse. (Ch. 15 Pair ou impair? Au-del`a de l’intersubjectivitiv ́e. )  ́Editions du
+Seuil, Paris, 1978.
+
+Artists such as musician
+Iannis Xenakis developed “Free Stochastic Music” based on Markov chains, and early
+media artists and computer experts such as Frieder Nake plotted pictures generated
+by Markov models.
+
+
+Typical examples of Markov chains often use the weather and use values like, "sunny" or "rainy" that are exclusive of eachother. Here, we already might notice a problem: can't the weather be a bit sunny and a bit rainy? Can't a mood be a mixture of moods? Obviously, the answer is yes, and there are ways to account for this, but in a Markov process, a "state" only tracks *one value*. The implications here are that, as is often the case, we must simplify the world in order to model it (if only to have somewhere to start).  
+
+There is also an assumption at the core of this idea that from any given state in the sequence the only relevant data to predict the next state is what states have followed it in the 'past,' or rather, in the data or sequence being modeled. Again, there are other means of accounting for external influence, for example, perhaps the activity you might do next is influenced by both the weather and your mood and not necessarily what you are currently doing. 

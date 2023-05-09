@@ -1,45 +1,10 @@
 const Midis = {};
-const models = [] //array of map of maps {bigint: {bigint: count}}
-const testMaps = [];
+const Models = {}; 
 const validSeq = new RegExp('[a-d]')
 var playing = true;
-
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-async function loop(action, params){
-    var i = params;
-    while(playing){
-        const tick = await wait(1000);
-        i = action(i);
-    }
-    return i;
-}
 
-
-function recThen(){
-    const time = Math.random()*1000;
-    console.log(time)
-    wait(time).then((value) => {
-        if(playing){
-            recThen();
-        }
-    })
-}
-
-function advance(settings){
-    console.log(settings.step);
-    settings.step++;
-    settings.step %= settings.length;
-    return settings;
-}
-
-function runTextMarkovOnce (){
-    //textMarkov.init();
-    //draw row selction boundary
-    //update prob bar
-    //pick random number move meter
-    //highlight selected prob and column
-}
-
+window.onload = attachListeners;
 
 function attachListeners() {
     var midiSelect = document.getElementById("midiSelect");
@@ -50,6 +15,12 @@ function attachListeners() {
             updateTrackSelect(key);
         }
     });
+    var tossTest = document.getElementById("tossTest");
+    tossTest.addEventListener("input", e =>{
+        const value = e.target.value / 100;
+        e.target.labels[0].innerHTML = `${value}`
+        toss.adjust(value)
+    })
     var tci = document.getElementById("textChainInput");
     tci.value = ""
     tci.addEventListener("input", (e) => {
@@ -60,6 +31,85 @@ function attachListeners() {
     });
     markovDemo.textModel();
     sequencer.init();
+    const width = 400;
+    const height = 300;
+
+    d3.select('#graphBox')
+        .append("svg")
+        .attr('id', 'mGraph')
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+}
+const toss = new coinToss();
+function coinToss () {
+    const sides = [{
+        'bound': 0.5,
+        'count': 0,
+        'label': 'heads'
+    },{
+        'bound': 1.0,
+        'count': 0,
+        'label': 'tails'
+    }]
+    var total = 0;
+    function flip(){
+        const r = Math.random();
+        var choice = 0;
+        sides.reduce((acc,d,i) => {
+            if(acc < r){
+                choice = i;
+            }
+            return acc += d.bound;
+        }, 0)
+        return choice;
+    }
+    function adjust(amt){
+        sides[0].bound = amt;
+        sides[1].bound = 1.0 - amt;
+    }
+    this.adjust = adjust
+    this.update = function(){
+        const svg = d3.select('#coinToss');
+        const w = svg.node().clientWidth;
+        const h = svg.node().clientHeight;
+        svg.selectAll("rect")
+            .data(sides)
+            .join("rect")
+            .attr('x', (d,i) => (w/3 * i) + w/3/2)
+            .attr('y', (d,i) => total ? (h - (d.count/total)*h) : 0)
+            .attr('width', w/3)
+            .attr('height', d => total ? (d.count/total)*h : 0)
+            .attr('fill', 'tomato')
+        svg.selectAll("text")
+            .data(sides)
+            .join("text")
+            .attr('x', (d,i) => (w/3 * i) + w/3)
+            .attr('y', (d,i) => total ? (h - 20 - (d.count/total)*h/2) : 0)
+            .attr('fill', 'black')
+            .attr('font-size', 22)
+            .text(d => total ? `${d.label}` + (d.count/total).toPrecision(4) : '')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+
+
+    }
+    this.flip = function(n=1){
+        for(let i = 0; i < n; i++){
+            sides[flip()].count++
+            total++
+        }
+        this.update()
+    }
+    this.flip10k = function(){
+        this.flip(10000)
+    }
+    this.clear = function(){
+        sides.forEach(d => d.count=0)
+        total = 0;
+        this.update();
+    }
 }
 const markovDemo = new demo1();
 function demo1 (){
@@ -138,16 +188,15 @@ function demo1 (){
             acc += v;
         })
         const bar = d3.select('#probBar')
-        const w = parseFloat(bar.select(function () {
-                return this.parentNode
-            }).attr('width'))
+        const w = d3.select('#textProb').node().clientWidth;
+        const h = d3.select('#textProb').node().clientHeight;
         bar.selectAll("rect")
             .data(data)
             .join("rect")
             .attr("width", d => d.p*w)
-            .attr("height", 100)
+            .attr("height", h/3)
             .attr('x', d => d.x*w)
-            .attr('y', 0)
+            .attr('y', 2*h/3)
             .attr('fill', d => d3.interpolateLab('steelblue','tomato')(d.p))
         
         return data;
@@ -171,25 +220,24 @@ function demo1 (){
         d3.select('#textRandom')
             .text(r.toFixed(2))
         const w = d3.select('#textProb').node().clientWidth;
-        const tx = Math.trunc(r * w);
+        const h = d3.select('#textProb').node().clientHeight;
+        const tx = Math.trunc(r*w);
+        const ty = Math.trunc(h/3);
         d3.select('#probMeter')
-            .attr('transform', `translate(${tx},100)`)
+            .attr('transform', `translate(${tx},${ty})`)
         return r;
 
     }
     this.runTextModel = async function (){
         var a = textMarkov.init();
         var r = atoi(a);
-        console.log([a,r])
         var n;
         while(playing){
             selectTableRow(r);
             await wait(1000);
             const data = lookAtStep(a);
-            console.log(data);
             await wait(1000);
             const rand = randomNumber(n);
-            console.log(rand);
             await wait(1000);
             r = 0;
             data.forEach((d,i) => {
@@ -197,15 +245,12 @@ function demo1 (){
                     r = i;
                 };
             })         
-            console.log(r)
             a = data[r].key;
-            console.log(a);
             r++;
         }
         selectTableRow(0);
     }
 }
-window.onload = attachListeners;
 
 function updateTrackSelect(key){
     const form = d3.select("#trackSelect");
@@ -306,6 +351,7 @@ function updateTMapSelect(state, name){
         .style('filter', state ? "" : "url(#grayscale)");
 }
 
+//obsolete: tracks aren't merged, new models are made
 function mergeTracks(file, track1, track2){
     //make recursive?
     const midifile = Midis[file];
@@ -375,6 +421,80 @@ function midiToTrackMaps(midi){
                     return d3.interpolateLab("steelblue", "tomato")(d.velocity)
                 });
 }
+//const graph = new Graph();
+
+const Graph = function() {
+    var nodes = [];
+    var links = [];
+    const scale = ['D#3','F3','G3','A3','A#3','C4','D4','D#4'];
+    this.update = function(data){
+        const svg = d3.select('#mGraph').html("")
+        nodes.splice(0, nodes.length);
+        links.splice(0, links.length);
+        nodes = data.nodes.map(n => { return {...n} });
+        links = data.links.map(l => { return {...l} });
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links)
+                .id(function (d) {return d.id}))
+                //.strength(function (_) {return 100}))
+            .force("charge", d3.forceManyBody().strength(d => -300))
+            .force("center",  d3.forceCenter())
+            //.randomSource(d => d.id)
+            .stop()
+
+        simulation.tick(1300);
+            //.attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+            //.attr("stroke-opacity", linkStrokeOpacity)
+            //.attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+            //.attr("stroke-linecap", linkStrokeLinecap)
+        svg.selectAll("line")
+        .data(links)
+        .join("line")
+            .attr('source', d => d.source.id)
+            .attr('target', d => d.target.id)
+            .attr('class', d => `from-${d.source.id} to-${d.target.id}`)
+            .attr('stroke', 'lightgrey')
+            .attr('stroke-width', 3)
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+    
+        svg.selectAll("circle")
+        .data(nodes)
+        .join("circle")
+            .attr('id', d => `node-${d.id}`)
+            .attr('fill', 'lightgrey')
+            .attr("r", 20)
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+        
+        svg.selectAll("text")
+            .data(nodes)
+            .join("text")
+                .attr('fill', 'black')
+                .attr('font-size', '18')
+                .attr('x', d => d.x)
+                .attr('y', d => d.y)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .text(d => scale[d.id])
+            //.on("tick", ticked);
+    }
+    this.highlight = function(data){
+
+        const hm = d3.select(`#node-${data.curr}`)
+            .attr('fill', 'white')
+            .attr('stroke', 'gold')
+            .attr('stroke-width', 5)
+        data.next.forEach(n => {
+            d3.select(`#node-${n.to}`)
+                .attr('fill', d3.interpolateLab('steelblue', 'tomato')(n.value))
+            d3.selectAll(`.from-${n.from}.to-${n.to}`)
+                .attr('stroke', d3.interpolateLab('steelblue', 'tomato')(n.value))
+        })
+    }
+}
 
 function Markov(){
     const inputs = new Map();
@@ -406,6 +526,11 @@ function Markov(){
         }
         last = i;
     }
+    //add for hidden markov
+    //map level 2 may have different keys
+    this.addHidden = function (obs, hid) {
+        
+    }
     this.init = function (){
         //prime with a random state
         const keys = [ ...inputs.keys()];
@@ -414,25 +539,21 @@ function Markov(){
         return state;
     }
     this.step = function (){
+        state = this.randomChoice();
+        return state;
+    }
+    this.randomChoice = function () {
         const curr = inputs.get(state);
-        //console.log(curr);
         var acc = 0;
         const choice = Math.random();
-        //console.log(choice);
         var next = [...curr.keys()][0];
-        //console.log(next)
         for([k,v] of curr.entries()){
-            //console.log([k,v]);
-            //console.log(acc);
             if( acc < choice){
                 next = k;
             }
-            //console.log(next);
             acc += v.prob
         }
-        //console.log(next);
-        state = next;
-        return state;   
+        return next;
     }
     this.to = function (s){
         state = s;
@@ -444,7 +565,7 @@ function Markov(){
             var row = inputs.get(state);
             var transitions = [...row.keys()];
             transitions.forEach((t) => {
-                values.push({[t]: row.get(t).prob}) //prob
+                values.push({from: state, to: t, value: row.get(t).prob}) //prob
             }) 
         }
         return values;
@@ -452,6 +573,25 @@ function Markov(){
     this.close = function (){
         //wrap last to first
         set(last, first);
+        return this;
+    }
+    this.graph = function(){
+        const graph = {
+        nodes: [],
+        links: []
+        };
+        for(n of inputs.keys()){
+            graph.nodes.push({'id': n})
+            for([k,v] of inputs.get(n).entries()){
+                graph.links.push({
+                    'source': n,
+                    'target': k,
+                    'value': inputs.get(n).get(k).prob
+                })
+            }
+        }
+        return graph;
+        
     }
     this.model = function (){
         for(input of inputs.values()){
@@ -464,6 +604,7 @@ function Markov(){
                 })
         }        
         //could return something?
+        return this;
     }
     this.data = function () {
         var data = [];
@@ -474,18 +615,30 @@ function Markov(){
                             'probability': v2.prob})
             }
         }
-        console.log(data);
         return data;
     }
 }
 const sequencer = new Sequencer(16,8);
 function Sequencer (steps,notes) {
     const model = new Markov();
-    const synth = new Tone.Synth().toDestination();
+    const graph = new Graph();
+    const synth = new Tone.Synth(
+        { 
+            envelope: 
+            {
+                attack: 0.05,
+                decay: 0.1,
+                sustain: 0.3,
+                release: 0.5
+            }
+        }
+    ).toDestination();
     const scale = ['D#3','F3','G3','A3','A#3','C4','D4','D#4'];
+    this.scale = scale;
     const lerp = (v) => d3.interpolateLab('steelblue', 'tomato')(v)
-    this.grid = []
+    grid = []
     this.playing = false;
+    this.stop = () => this.playing = false
     this.model = model;
     this.init = () => {
         const svg = d3.select("#sequencer");
@@ -503,11 +656,11 @@ function Sequencer (steps,notes) {
             d['x'] = col(i) * dx;
             d['y'] = row(i) * dy;
             d['state'] = false
-            this.grid.push(d);
+            grid.push(d);
         }
         d3.select('#sequencer')
             .selectAll('g')
-            .data(this.grid)
+            .data(grid)
             .join('g')
             .attr('transform', d => `translate(${d.x}, ${d.y})`)
             .append('rect')
@@ -534,7 +687,6 @@ function Sequencer (steps,notes) {
                         const step = d3.selectAll(`.step${r.datum().step}`)
                             .filter(d => d.state)
                             .datum(function (d) {
-                                //console.log(d);
                                 d.state = false;
                                 d.data = 0.1;
                                 return d;
@@ -544,31 +696,31 @@ function Sequencer (steps,notes) {
                     r.datum(function (d) { 
                             d.state = !d.state
                             d.data = d.state ? 0.7 : 0.3;
-                            //console.log(d);
                             return d;
                     })
                     r.attr('fill', d => lerp(d.data))
-
+                    train();
                 })
     }
     function update(selection){
-        selection.attr('fill', d => lerp(d.data))
-        //console.log(selection)
+        selection.attr('fill', d => lerp(d.data));
     }
-    this.train = function(){
+    function train(){
         model.clear();
-        const active = this.grid
+        const active = grid
             .filter(d => d.state)
             .sort((a,b) => a.step - b.step);
-        console.log(active);
         active.forEach(d => model.add(d.note));
         model.close();
         model.model();
-        console.log(model.init());
+        model.init();
+        graph.update(model.graph());
     }
+    this.train = train;
     this.play = async () =>{
-        //synth.triggerAttackRelease("C4", "8n");
+        Tone.start();
         var step = 0;
+        await wait(2000);
         this.playing = true;
         while(this.playing){
             let curr = d3.selectAll(`.step${step}`)
@@ -577,7 +729,7 @@ function Sequencer (steps,notes) {
                     return d;
                 })
             update(curr);
-            let notes = this.grid
+            let notes = grid
                 .filter(d => d.step == step)
                 .filter(d => d.state)
             if(notes.length)
@@ -585,7 +737,7 @@ function Sequencer (steps,notes) {
                 let note = scale[7 - notes[0].note]
                 synth.triggerAttackRelease(note, "8n");
             }
-            await wait(250);
+            await wait(400);
             curr.datum(function (d) {
                 d.data = d.data - 0.2;
                 return d;
@@ -596,55 +748,81 @@ function Sequencer (steps,notes) {
     }
     this.generate = async () => {
         this.playing = true;
+        Tone.start();
+        await wait(2000);
         while(this.playing){
             let newState = model.step();
+            graph.update(model.graph());
+            graph.highlight({curr: newState, next: model.next()})
             let note = scale[7 - newState];
             synth.triggerAttackRelease(note, "8n");
-            await wait(200);
+            await wait(400);
         }
     }
 }
 
-// get selected check boxes
-// make array of tracks selected
-// sort by time
-// create BigInts for polyphony
-// add to markov
+
 function temp() {
     const chain = new Markov();
-    const wait = new Markov();
-    const durations = new Markov();
+    //selected midi file
     const midi = document.getElementById('midiSelect').value
+    //available selected tracks
     const sel = [...document.querySelectorAll('#trackSelect input')
         .values()]
         .filter(node => node.checked)
         .map(node => node.id)
-
+    //create a name for the model
+    const mName = [midi, ...sel].reduce((acc, cur) =>{
+        return (acc + cur.slice(0,3) + '...' + cur.slice(-3) + ":")
+    }, '')
+    // actual midi data of selected tracks
     const tracks = Midis[midi].tracks
         .filter(t => sel.includes(t.name))
-
+    //temporary map to organize polyphony by timestamp
     //this map is actually way reusable should not be a local
     const ts = tracksToMapByAttr(tracks, 'ticks')
+    //keys sorted by start time
     const skeys = [...ts.keys()].sort((a,b) => a - b)
     // here we could get lots of data about the sequence
     // note/chord transitions, num notes, avg velocities 
     // its all right here.
-    skeys.reduce((acc, key) => {
+    skeys.forEach((key) => {
+        //sort midi notes so hashes collide eg [33, 35] = [35, 33]
         const step = ts.get(key).sort((a,b) => a.midi - b.midi)
-        const duration = step.reduce((avg,note) => avg += note.duration, 0) / step.length
+        //get duration data for step
+        //const duration = step.reduce((avg,note) => avg += note.duration, 0) / step.length
         //pack poly notes into a big int
         const hash = step.reduce((h, v, i) => {
             return h |= BigInt(v.midi) << BigInt(i*8);
         }, 0n);
         chain.add(hash);
-        wait.add(step[0].time - acc);
-        durations.add(duration);
-        return step[0].time;
+        //onset data can be done with a reduce instead of foreach above
+        //add an acc and return curr time
+        //return step[0].time;
 
     }, 0)
-    return [chain, wait, durations];
+    chain.close();
+    chain.model();
+    chain.init();
+      
+    Models[mName] = chain;
+    updateModels();
+    //return chain;
+}
 
-
+function updateModels() {
+    const m = d3.select("#models")
+        .selectAll("div")
+        .data(Object.keys(Models))
+        .join("div")
+        .html("");
+    
+    m.append("text")
+        .text(d => d);
+    m.append("button")
+        .text("Play Markov Model")
+        .attr("onclick", d => `demo("${d}")`);
+    
 }
 
 function decodeBigInt (big) {
@@ -658,7 +836,9 @@ function decodeBigInt (big) {
     return notes;
 }
 
-async function demo (markov, hold, duration) {
+async function demo (mname) {
+    const markov = Models[mname];
+    console.log(markov);
     const synth = new Tone.PolySynth(Tone.Synth, {
         envelope: {
             attack: 0.02,
@@ -670,19 +850,50 @@ async function demo (markov, hold, duration) {
     while(playing){
         const notes = decodeBigInt(markov.step())
         const freqs = notes.map(n => Tone.Frequency(n, "midi"))
-        console.log(freqs)
         synth.triggerAttackRelease(
             freqs,
-            hold.step(),
+            "8n",
             Tone.now(),
             0.7
         );
-        await wait(Math.trunc(hold.step() * 1000))
+        await wait(250)
     }
     synth.disconnect();
 }
 
 /*
+async function loop(action, params){
+    var i = params;
+    while(playing){
+        const tick = await wait(1000);
+        i = action(i);
+    }
+    return i;
+}
+
+
+function recThen(){
+    const time = Math.random()*1000;
+    wait(time).then((value) => {
+        if(playing){
+            recThen();
+        }
+    })
+}
+
+function advance(settings){
+    settings.step++;
+    settings.step %= settings.length;
+    return settings;
+}
+
+function runTextMarkovOnce (){
+    //textMarkov.init();
+    //draw row selction boundary
+    //update prob bar
+    //pick random number move meter
+    //highlight selected prob and column
+}
 function updateTextModel(sequence){
     const seqArr = [...sequence]
     textMarkov.clear();
