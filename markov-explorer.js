@@ -478,7 +478,7 @@ const Graph = function() {
                 .attr('y', d => d.y)
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'middle')
-                .text(d => scale[d.id])
+                .text(d => scale[7 - d.id])
             //.on("tick", ticked);
     }
     this.highlight = function(data){
