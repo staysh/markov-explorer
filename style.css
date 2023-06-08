@@ -338,3 +338,7 @@ code {
 .page {
 	page-break-after: always;
 }
+
+div {
+	max-width: 600px;
+}
